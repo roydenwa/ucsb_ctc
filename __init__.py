@@ -1,3 +1,3 @@
-import .track
-import .predict_stacks
-import .train_ctc
+from .track import *
+from .predict_stacks import *
+from .train_ctc import *
