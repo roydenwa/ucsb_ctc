@@ -10,6 +10,27 @@ import concurrent.futures
 from networkx.algorithms import similarity
 
 
+def compute_unique_vals(array: np.ndarray, return_counts: bool) \
+                        -> (np.ndarray, np.ndarray):
+    '''
+    helper-func to calc unique vals and their occurrences in a np.ndarray
+    using the highly optimized pd.unique()
+
+    significantly faster than np.unique() for smaller numbers of unique vals 
+    '''
+    unique_vals = pd.unique(array.flatten('K'))
+    
+    if return_counts:
+        occurrences = np.zeros(len(unique_vals), dtype=np.uint16)
+
+        for idx, val in enumerate(unique_vals):
+            occurrences[idx] = np.count_nonzero(array == val)
+        
+        return unique_vals, occurrences
+    else:
+        return unique_vals
+
+
 def save_img_as_tiff(seg_img: np.ndarray, time: int, track_save_dir: str):
     """
     helper-func to parallelize saving imgs as tiff-files 
