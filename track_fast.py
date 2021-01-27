@@ -48,7 +48,7 @@ def cell_center_fast(seg_img: np.ndarray, labels: np.ndarray) -> np.ndarray:
     return results
 
 # was opt3
-def compute_cell_location_fast(seg_img: np.ndarray, all_labels: np.ndarray) \ 
+def compute_cell_location_fast(seg_img: np.ndarray, all_labels: np.ndarray) \
                                -> (nx.graph, np.ndarray):
     """
     optimized version of compute_cell_location()
