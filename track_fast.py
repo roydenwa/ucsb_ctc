@@ -1,4 +1,5 @@
 import os
+import numba
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -50,12 +51,13 @@ def save_img_as_tiff(img_array: np.ndarray, filename: str, save_dir: str):
     sitk.WriteImage(img, os.path.join(save_dir, filename))
 
 
-def cell_center_fast(seg_img: np.ndarray, labels: np.ndarray) -> np.ndarray:
+@numba.njit(parallel=True)
+def cell_center_fast(seg_img: np.ndarray, labels: np.ndarray,
+                     results: np.ndarray) -> np.ndarray:
     """
     faster version of cell_center()
     speed gained by reusing previously calculated labels
     """
-    results = {}
     for label in labels:
         if label != 0:
             all_points_z, all_points_x, all_points_y = np.where(seg_img == label)
@@ -75,7 +77,8 @@ def compute_cell_location_fast(seg_img: np.ndarray, all_labels: np.ndarray) \
     by using cell_center_fast()
     """
     g = nx.Graph()
-    centers = cell_center_fast(seg_img, all_labels)
+    centers = np.zeros(max(all_labels) + 1, 3)
+    centers = cell_center_fast(seg_img, all_labels, centers)
 
     # Compute vertices
     for i in all_labels:
