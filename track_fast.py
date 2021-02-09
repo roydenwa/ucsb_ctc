@@ -77,7 +77,7 @@ def compute_cell_location_fast(seg_img: np.ndarray, all_labels: np.ndarray) \
     by using cell_center_fast()
     """
     g = nx.Graph()
-    centers = np.zeros(max(all_labels) + 1, 3)
+    centers = np.zeros((max(all_labels) + 1, 3))
     centers = cell_center_fast(seg_img, all_labels, centers)
 
     # Compute vertices
