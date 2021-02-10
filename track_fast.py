@@ -197,7 +197,7 @@ def tracklet_fast(g1: nx.Graph, g2: nx.Graph, seg_img1: np.ndarray, seg_img2: np
     return maxtrackid, linelist
 
 
-def track_main_fast(seg_fold: str, track_fold: str):
+def track_main_numba(seg_fold: str, track_fold: str):
     """
     faster version of track_main()
     speed gained by parallelizing IO,
