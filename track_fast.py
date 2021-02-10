@@ -52,12 +52,7 @@ def save_img_as_tiff(img_array: np.ndarray, filename: str, save_dir: str):
 
 
 @numba.njit(parallel=True)
-def cell_center_fast(seg_img: np.ndarray, labels: np.ndarray,
-                     results: np.ndarray) -> np.ndarray:
-    """
-    faster version of cell_center()
-    speed gained by reusing previously calculated labels
-    """
+def compute_centers_jit(seg_img: np.ndarray, labels: np.ndarray, results: np.ndarray) -> np.ndarray:
     for label in labels:
         if label != 0:
             all_points_z, all_points_x, all_points_y = np.where(seg_img == label)
@@ -68,6 +63,21 @@ def cell_center_fast(seg_img: np.ndarray, labels: np.ndarray,
 
     return results
 
+def cell_center_numba(seg_img: np.ndarray, labels: np.ndarray) -> dict:
+    """
+    faster version of cell_center()
+    speed gained by reusing previously calculated labels and 
+    by using just-in-time compilation
+    """
+    results = np.zeros((max(labels) + 1, 3))
+    results = compute_centers_jit(seg_img, labels, results)
+
+    # convert to dict and filter out results[0] and sub-arrays conatining only 0s
+    results_dict = {key: val for key, val in enumerate(results) \
+                    if key != 0 and max(val) != 0}
+
+    return results_dict
+
 
 def compute_cell_location_fast(seg_img: np.ndarray, all_labels: np.ndarray) \
                                -> nx.Graph:
@@ -77,8 +87,7 @@ def compute_cell_location_fast(seg_img: np.ndarray, all_labels: np.ndarray) \
     by using cell_center_fast()
     """
     g = nx.Graph()
-    centers = np.zeros((max(all_labels) + 1, 3))
-    centers = cell_center_fast(seg_img, all_labels, centers)
+    centers = cell_center_numba(seg_img, all_labels)
 
     # Compute vertices
     for i in all_labels:
@@ -115,8 +124,8 @@ def tracklet_fast(g1: nx.Graph, g2: nx.Graph, seg_img1: np.ndarray, seg_img2: np
     new_seg_img2 = np.zeros(seg_img2.shape)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        thread1 = executor.submit(cell_center_fast, seg_img1, labels_img1)
-        thread2 = executor.submit(cell_center_fast, seg_img2, labels_img2)
+        thread1 = executor.submit(cell_center_numba, seg_img1, labels_img1)
+        thread2 = executor.submit(cell_center_numba, seg_img2, labels_img2)
         thread3 = executor.submit(g1.degree, weight='weight')
         thread4 = executor.submit(g2.degree, weight='weight')
 
